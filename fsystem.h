@@ -20,6 +20,8 @@ int check_empty_space(char *name);
 
 int display_directory(char *name);
 
+int display_space_map(char *name);
+
 int delete_system(char* name_of_file_system);
 
 int add_file(char* name_of_fsystem, char* name_of_file);

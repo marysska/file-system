@@ -15,9 +15,7 @@ int create_system(char* name){
 	}
 	empty_file=malloc((SIZE_OF_ALL_FILES + SIZE_OF_DESCRIPTORS+1)* sizeof(char));
 	memset(empty_file, 0, SIZE_OF_ALL_FILES + SIZE_OF_DESCRIPTORS+1);
-	//for (i=0; i< SIZE_OF_ALL_FILES + SIZE_OF_DESCRIPTORS +1; ++i){
-	//	empty_file[SIZE_OF_ALL_FILES + SIZE_OF_DESCRIPTORS]='#';
-	//}
+	empty_file[SIZE_OF_ALL_FILES + SIZE_OF_DESCRIPTORS]='#';
 	fseek(file_system, 0, 0);
 	size=fwrite(empty_file,sizeof(char) ,(SIZE_OF_ALL_FILES + SIZE_OF_DESCRIPTORS+1), file_system);
 	if (size!=(SIZE_OF_ALL_FILES+SIZE_OF_DESCRIPTORS+1)){
@@ -27,10 +25,10 @@ int create_system(char* name){
 	}
 	fclose(file_system);
 	free(empty_file);
-	printf("created file system\n");
+	printf("success: created file system\n");
 	return 0;
 
-//uzyj calloc
+
 
 }
 
@@ -67,9 +65,9 @@ int display_directory(char *name_of_file_system){
 	fread(map, sizeof(char), NAMES_START, system);
 	int index;
 	index=0;
-	for (i=0; i<NAMES_START-1; i++){
+	for (i=0; i<NAMES_START; i++){
 		if(map[i]!=0){
-			//printf("index %d adress %d \n",i, (NAMES_START+i*(MAX_NAME+SPACE_FOR_SIZE)));
+
 			fseek(system, (NAMES_START+i*(MAX_NAME+SPACE_FOR_SIZE)) ,0);
 
 			fread(name, sizeof(char), MAX_NAME, system);
@@ -80,7 +78,6 @@ int display_directory(char *name_of_file_system){
 			printf("%d . File %s real size %u in block number %d \n", index, name, size, i);
 			index++; 
 		}
-		//printf("i %d \n", i);
 	}
 	fseek(system, 0 ,2);
 	long int siz;
@@ -100,7 +97,6 @@ int add_file(char* name_of_fsystem, char* name_of_file){
 	long int size;
 	unsigned short int size_to_put;
 	FILE *system, *file_to_add;
-	///       sprawdz unikalnosc nazwy 
 	if (check_if_name_exist(name_of_fsystem, name_of_file)!=-1){
 		printf("file with this name already exist!\n");
 		return -3;
@@ -141,29 +137,30 @@ int add_file(char* name_of_fsystem, char* name_of_file){
 	k[0]=1;
 	size_to_put=size;
 	char *c;
-	//printf("checked everything size %d \n", size_to_put);
-	//sleep(20);
 
 	fclose(system);
 	system=fopen(name_of_fsystem, "r+");
 	//w i mamy w nr bloku w ktorym jest miejsce
 	fseek(system, i, 0);			//mapa
 	fwrite(k, sizeof(char), 1, system);
-	printf("Adres poczatku dodawania tytułu %d \n", (NAMES_START+i*(MAX_NAME+SPACE_FOR_SIZE)));
-	fseek(system, (NAMES_START+i*(MAX_NAME+SPACE_FOR_SIZE)) ,0);
+
+	fseek(system, (NAMES_START+i*(MAX_NAME+SPACE_FOR_SIZE)) ,0);   //name
 	fwrite(name_of_file, sizeof(char), size_of_name(name_of_file), system);
-	fseek(system, (NAMES_START+i*(MAX_NAME+SPACE_FOR_SIZE)+MAX_NAME) ,0);
+
+	fseek(system, (NAMES_START+i*(MAX_NAME+SPACE_FOR_SIZE)+MAX_NAME) ,0); //size
 	fwrite(&size_to_put, sizeof(char)*2, 1, system);
+
 	c=malloc((size)* sizeof(char));
-	fseek(file_to_add, 0, 0); // na poczatek
+
+	fseek(file_to_add, 0, 0); // odzytaj plik
 	fread(c, sizeof(char), size, file_to_add);
 	fclose(file_to_add);
 
-	fseek(system, (DATA_START+i*(MAX_FILE_SIZE)) ,0);
+	fseek(system, (DATA_START+i*(MAX_FILE_SIZE)) ,0); //file
 	fwrite(c, sizeof(char), size, system);
-	fseek(system, (SIZE_OF_ALL_FILES + SIZE_OF_DESCRIPTORS+1) ,0);
+	//fseek(system, (SIZE_OF_ALL_FILES + SIZE_OF_DESCRIPTORS+1) ,0);
 	fclose(system);
-	printf("file %s added to block nr %d \n", name_of_file, i);
+	printf("success: file %s added to block nr %d \n", name_of_file, i);
 	result=i;
 	return result;
 
@@ -187,7 +184,6 @@ int check_if_name_exist(char* name_of_fsystem, char* name_of_file){
 			
 			fseek(system, (NAMES_START+i*(MAX_NAME+SPACE_FOR_SIZE)) ,0);
 			fread(name, sizeof(char), MAX_NAME, system);
-			//printf("name of file akt %s \n", name);
 			if (isStringEqual(name_of_file, name, MAX_NAME)!=0){
 				fclose(system);
 				return i;
@@ -209,7 +205,7 @@ int delete_file(char* name_of_fsystem, char* name_of_file){
 	int i;
 	i=check_if_name_exist( name_of_fsystem, name_of_file);
 	if (i==-1){
-		printf("There is not any file with this name in the disc\n");
+		printf("There isn't any file with this name in the disc\n");
 		return -1;
 
 	}
@@ -222,7 +218,6 @@ int delete_file(char* name_of_fsystem, char* name_of_file){
 
 int isStringEqual(char * name1, char * name2, int size){
 	int i=0;
-	//printf("string1 %s, string2 %s \n", name1, name2);
 	for (i=0; i<size-1; ++i){
 		if(name1[i]!=name2[i]){
 			return 0;
@@ -253,7 +248,7 @@ int clearSpace(char * name, int i){
 	fseek(system, (DATA_START+i*(MAX_FILE_SIZE)) ,0);
 	fwrite(file_space, sizeof(char), MAX_FILE_SIZE, system);
 	fclose(system);
-	printf("The file from block number %d is clean\n", i);
+	printf("success: Block number %d is empty\n", i);
 	return result;
 
 }
@@ -282,7 +277,7 @@ int copy_file_outside(char* name_of_fsystem, char* name_of_file){
 	i=check_if_name_exist( name_of_fsystem,  name_of_file);
 	if (i==-1){
 
-		printf("There is not any file %s in the virtual disc\n", name_of_file);
+		printf("There isn't any file %s in the virtual disc\n", name_of_file);
 		return -1;
 	}
 	char size[SPACE_FOR_SIZE];
@@ -300,11 +295,55 @@ int copy_file_outside(char* name_of_fsystem, char* name_of_file){
 	out_file=fopen(name_of_file, "w");
 	fwrite(data, sizeof(char), s_size, out_file);
 	fclose(out_file);
-	printf("File %s is now on the LINUX disc\n", name_of_file);
+	printf("success: File %s is now on the LINUX disc\n", name_of_file);
 	return i;
 
 
 }
+
+
+int display_space_map(char *name){
+	printf("Virtual Disc memory\n");
+	int result, i;
+	result=0;
+	char map[NAMES_START];
+	//char table_size[SPACE_FOR_SIZE];
+	unsigned short int size;
+	FILE *system;
+	char c[2];
+	system=fopen(name, "r");
+	fread(map, sizeof(char), NAMES_START, system);
+	int index;
+	index=0;
+	for (i=0; i<NAMES_START; i++){
+		if(map[i]==0){
+			printf("index %3d   0/%3d \t", i, MAX_FILE_SIZE);
+		}
+		else{
+
+
+			fseek(system, (NAMES_START+i*(MAX_NAME+SPACE_FOR_SIZE)+MAX_NAME) ,0);
+			fread(c, sizeof(char), SPACE_FOR_SIZE, system);		
+			char2short(c, &size);
+			printf("index %3d %3d/%d \t", i,size, MAX_FILE_SIZE);
+			
+		}
+		index++;
+		if (index%4==0){
+			printf("\n");
+			index=0;
+		}
+	}
+	fclose(system);
+	result=index;
+	return result;
+
+
+
+
+}
+
+
 
 
 
@@ -313,8 +352,9 @@ int delete_system(char* name){
 	result=remove(name);
 	if (result!=0){
 		printf("something went wrong, cannot remove system\n");
+		return result;
 	}
-	printf("The system is removed\n");
+	printf("success: delete the virtual disc\n");
 	return result;
 
 }
